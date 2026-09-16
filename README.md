@@ -26,10 +26,9 @@ A few choices worth calling out:
 git clone https://github.com/aashir1998/appwork-automation-task.git
 cd appwork-automation-task
 npm install
-cp .env.example .env
 ```
 
-`.env` currently only needs:
+Create a `.env` file in the project root with:
 
 ```
 CYPRESS_BASE_URL=https://www.saucedemo.com
