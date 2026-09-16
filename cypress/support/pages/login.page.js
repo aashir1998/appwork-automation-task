@@ -42,11 +42,13 @@ class LoginPage {
       .and('have.text', 'Products');
   }
 
-  assertLoginError(expectedMessage) {
+  assertLoginError(userKey) {
     cy.url({ timeout: this.defaultTimeout }).should('not.include', '/inventory.html');
-    cy.get(this.errorMessage, { timeout: this.defaultTimeout })
-      .should('be.visible')
-      .and('contain.text', expectedMessage);
+    cy.fixture('users').then(({ errorMessages }) => {
+      cy.get(this.errorMessage, { timeout: this.defaultTimeout })
+        .should('be.visible')
+        .and('contain.text', errorMessages[userKey]);
+    });
   }
 }
 

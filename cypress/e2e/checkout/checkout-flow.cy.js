@@ -9,16 +9,15 @@ describe('Checkout Flow', { tags: ['@Smoke', '@Regression'] }, () => {
     const products = new ProductsPage();
     const cart = new CartPage();
     const checkout = new CheckoutPage();
-    const productName = 'Sauce Labs Backpack';
 
     login.loginUsingUi('standard');
     login.assertLoginSuccess();
 
-    products.addProductToCart(productName);
+    products.addProductToCart('backpack');
     products.assertCartBadgeCount(1);
     products.openCart();
 
-    cart.assertContainsProduct(productName);
+    cart.assertContainsProduct('backpack');
     cart.startCheckout();
 
     checkout.fillInfoWithGeneratedData();

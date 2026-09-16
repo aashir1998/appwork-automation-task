@@ -1,9 +1,7 @@
 # syntax=docker/dockerfile:1
 
-# Tag must match the `cypress` version in package.json (currently 16.1.0) —
-# a mismatch makes `npm ci` re-download the Cypress binary from the internet
-# instead of using the one already baked into this image.
-FROM cypress/included:16.1.0
+
+FROM cypress/base:24.11.0
 
 # Set required env variables
 # --disable-dev-shm-usage is intentionally NOT set: CI runners provide a
@@ -17,9 +15,8 @@ ENV CYPRESS_CACHE_FOLDER=/root/.cache/Cypress \
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-# Cache mount keeps npm's download cache across builds on the same builder,
-# so a lockfile change only fetches what's new instead of everything.
-RUN --mount=type=cache,target=/root/.npm npm ci --silent
+
+RUN --mount=type=cache,target=/root/.npm npm ci --silent && npx cypress verify
 
 COPY . .
 

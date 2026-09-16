@@ -3,8 +3,12 @@ const { defineConfig } = require('cypress');
 const { plugin: cypressGrepPlugin } = require('@cypress/grep/plugin');
 
 module.exports = defineConfig({
+  expose: {
+    grepFilterSpecs: true,
+    grepOmitFiltered: true,
+  },
   e2e: {
-    baseUrl: process.env.CYPRESS_BASE_URL || 'https://www.saucedemo.com',
+    baseUrl: process.env.CYPRESS_BASE_URL,
     specPattern: 'cypress/e2e/**/*.cy.js',
     supportFile: 'cypress/support/e2e.js',
     fixturesFolder: 'cypress/fixtures',
@@ -18,10 +22,6 @@ module.exports = defineConfig({
     retries: {
       runMode: 1,
       openMode: 0,
-    },
-    env: {
-      grepFilterSpecs: true,
-      grepOmitFiltered: true,
     },
     setupNodeEvents(on, config) {
       cypressGrepPlugin(config);

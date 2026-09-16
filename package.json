@@ -6,8 +6,8 @@
   "scripts": {
     "cy:open": "cypress open",
     "cy:run": "cypress run",
-    "test:smoke": "cypress run --env grepTags=@Smoke",
-    "test:regression": "cypress run --env grepTags=@Regression",
+    "test:smoke": "cypress run --expose grepTags=@Smoke",
+    "test:regression": "cypress run --expose grepTags=@Regression",
     "report:merge": "mochawesome-merge cypress/reports/mocha/*.json > cypress/reports/report.json",
     "report:generate": "marge cypress/reports/report.json -o cypress/reports/html --inline",
     "report": "npm run report:merge && npm run report:generate",

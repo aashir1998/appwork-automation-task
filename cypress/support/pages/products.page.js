@@ -21,24 +21,32 @@ class ProductsPage {
     return `[data-test="remove-${ProductsPage.slugify(productName)}"]`;
   }
 
-  addProductToCart(productName) {
-    cy.get(ProductsPage.addButtonFor(productName), { timeout: this.defaultTimeout })
-      .should('be.visible')
-      .and('be.enabled')
-      .click();
-    cy.get(ProductsPage.removeButtonFor(productName), { timeout: this.defaultTimeout }).should(
-      'be.visible'
-    );
+  addProductToCart(productKey) {
+    cy.fixture('products').then(products => {
+      const productName = products[productKey];
+
+      cy.get(ProductsPage.addButtonFor(productName), { timeout: this.defaultTimeout })
+        .should('be.visible')
+        .and('be.enabled')
+        .click();
+      cy.get(ProductsPage.removeButtonFor(productName), { timeout: this.defaultTimeout }).should(
+        'be.visible'
+      );
+    });
   }
 
-  removeProductFromCart(productName) {
-    cy.get(ProductsPage.removeButtonFor(productName), { timeout: this.defaultTimeout })
-      .should('be.visible')
-      .and('be.enabled')
-      .click();
-    cy.get(ProductsPage.addButtonFor(productName), { timeout: this.defaultTimeout }).should(
-      'be.visible'
-    );
+  removeProductFromCart(productKey) {
+    cy.fixture('products').then(products => {
+      const productName = products[productKey];
+
+      cy.get(ProductsPage.removeButtonFor(productName), { timeout: this.defaultTimeout })
+        .should('be.visible')
+        .and('be.enabled')
+        .click();
+      cy.get(ProductsPage.addButtonFor(productName), { timeout: this.defaultTimeout }).should(
+        'be.visible'
+      );
+    });
   }
 
   openCart() {

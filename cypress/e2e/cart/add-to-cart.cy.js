@@ -7,15 +7,13 @@ describe('Add to Cart', { tags: ['@Smoke'] }, () => {
     const login = new LoginPage();
     const products = new ProductsPage();
     const cart = new CartPage();
-    const productName = 'Sauce Labs Backpack';
 
     login.loginUsingUi('standard');
     login.assertLoginSuccess();
 
-    products.addProductToCart(productName);
+    products.addProductToCart('backpack');
     products.assertCartBadgeCount(1);
     products.openCart();
-
-    cart.assertContainsProduct(productName);
+    cart.assertContainsProduct('backpack');
   });
 });

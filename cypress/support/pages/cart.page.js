@@ -6,10 +6,12 @@ class CartPage {
     this.defaultTimeout = 8000;
   }
 
-  assertContainsProduct(productName) {
-    cy.get(this.cartItemName, { timeout: this.defaultTimeout })
-      .should('be.visible')
-      .and('have.text', productName);
+  assertContainsProduct(productKey) {
+    cy.fixture('products').then(products => {
+      cy.get(this.cartItemName, { timeout: this.defaultTimeout })
+        .should('be.visible')
+        .and('have.text', products[productKey]);
+    });
   }
 
   startCheckout() {
