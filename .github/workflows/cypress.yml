@@ -2,9 +2,9 @@ name: Cypress Tests
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
   workflow_dispatch:
 
 permissions:
@@ -22,7 +22,7 @@ jobs:
     outputs:
       specs: ${{ steps.list.outputs.specs }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: list
         run: |
           specs=$(find cypress/e2e -name '*.cy.js' | sort | jq -R -s -c 'split("\n")[:-1]')
@@ -35,14 +35,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7
         with:
           context: .
           push: true
@@ -58,7 +58,7 @@ jobs:
       matrix:
         spec: ${{ fromJson(needs.discover.outputs.specs) }}
     steps:
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -75,42 +75,41 @@ jobs:
             cy:run -- --spec "${{ matrix.spec }}"
       - name: Upload raw results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: mocha-results-${{ steps.safe-name.outputs.name }}
           path: cypress/reports/mocha/*.json
           if-no-files-found: warn
       - name: Upload screenshots on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: screenshots-${{ steps.safe-name.outputs.name }}
           path: cypress/screenshots
 
+  # Merging/rendering the mochawesome JSON is plain Node work — running it
+  # directly on the runner instead of pulling the multi-GB Cypress image
+  # (which this job never needs) skips that pull entirely.
   report:
     needs: [build, test]
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Download all raw results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: mocha-results-*
           path: cypress/reports/mocha
           merge-multiple: true
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
       - name: Merge and generate HTML report
         run: |
-          docker run --rm \
-            -v "$PWD/cypress/reports:/app/cypress/reports" \
-            "$IMAGE:$GITHUB_SHA" \
-            report
+          npx --yes mochawesome-merge@^5.1.1 cypress/reports/mocha/*.json > cypress/reports/report.json
+          npx --yes -p mochawesome-report-generator@^6.3.2 -- marge cypress/reports/report.json -o cypress/reports/html --inline
       - name: Upload HTML report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cypress-html-report
           path: cypress/reports/html
