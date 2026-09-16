@@ -1,0 +1,39 @@
+require('dotenv').config();
+const { defineConfig } = require('cypress');
+const { plugin: cypressGrepPlugin } = require('@cypress/grep/plugin');
+
+module.exports = defineConfig({
+  e2e: {
+    baseUrl: process.env.CYPRESS_BASE_URL || 'https://www.saucedemo.com',
+    specPattern: 'cypress/e2e/**/*.cy.js',
+    supportFile: 'cypress/support/e2e.js',
+    fixturesFolder: 'cypress/fixtures',
+    downloadsFolder: 'cypress/downloads',
+    viewportWidth: 1366,
+    viewportHeight: 768,
+    defaultCommandTimeout: 8000,
+    pageLoadTimeout: 60000,
+    video: false,
+    screenshotOnRunFailure: true,
+    retries: {
+      runMode: 1,
+      openMode: 0,
+    },
+    env: {
+      grepFilterSpecs: true,
+      grepOmitFiltered: true,
+    },
+    setupNodeEvents(on, config) {
+      cypressGrepPlugin(config);
+      return config;
+    },
+  },
+
+  reporter: 'mochawesome',
+  reporterOptions: {
+    reportDir: 'cypress/reports/mocha',
+    overwrite: false,
+    html: false,
+    json: true,
+  },
+});

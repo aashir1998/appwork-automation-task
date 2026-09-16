@@ -1,0 +1,116 @@
+name: Cypress Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}/cypress
+
+jobs:
+  # Lists every spec file so the test job can shard one-file-per-matrix-entry.
+  # Stays correct automatically as specs are added/removed - nothing to maintain.
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      specs: ${{ steps.list.outputs.specs }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: list
+        run: |
+          specs=$(find cypress/e2e -name '*.cy.js' | sort | jq -R -s -c 'split("\n")[:-1]')
+          echo "specs=$specs" >> "$GITHUB_OUTPUT"
+
+  # Builds the test image once and pushes it to GHCR so every parallel test
+  # job just pulls it instead of re-running `npm ci` from scratch. The GHA
+  # cache backend keeps Docker layers warm across workflow runs too, so an
+  # unchanged Dockerfile/package-lock.json skips the rebuild entirely.
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  test:
+    needs: [discover, build]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        spec: ${{ fromJson(needs.discover.outputs.specs) }}
+    steps:
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: safe-name
+        run: echo "name=$(echo '${{ matrix.spec }}' | tr '/.' '--')" >> "$GITHUB_OUTPUT"
+      - name: Run ${{ matrix.spec }}
+        run: |
+          mkdir -p cypress/reports/mocha cypress/screenshots
+          docker run --rm \
+            -v "$PWD/cypress/reports:/app/cypress/reports" \
+            -v "$PWD/cypress/screenshots:/app/cypress/screenshots" \
+            "$IMAGE:$GITHUB_SHA" \
+            cy:run -- --spec "${{ matrix.spec }}"
+      - name: Upload raw results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mocha-results-${{ steps.safe-name.outputs.name }}
+          path: cypress/reports/mocha/*.json
+          if-no-files-found: warn
+      - name: Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-${{ steps.safe-name.outputs.name }}
+          path: cypress/screenshots
+
+  report:
+    needs: [build, test]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download all raw results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: mocha-results-*
+          path: cypress/reports/mocha
+          merge-multiple: true
+      - name: Merge and generate HTML report
+        run: |
+          docker run --rm \
+            -v "$PWD/cypress/reports:/app/cypress/reports" \
+            "$IMAGE:$GITHUB_SHA" \
+            report
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-html-report
+          path: cypress/reports/html
