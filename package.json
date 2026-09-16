@@ -5,7 +5,9 @@
   "scripts": {
     "cy:open": "cypress open",
     "cy:run": "cypress run",
+    "pretest:smoke": "rm -rf cypress/reports/mocha",
     "test:smoke": "cypress run --expose grepTags=@Smoke",
+    "pretest:regression": "rm -rf cypress/reports/mocha",
     "test:regression": "cypress run --expose grepTags=@Regression",
     "report:merge": "mochawesome-merge cypress/reports/mocha/*.json > cypress/reports/report.json",
     "report:generate": "marge cypress/reports/report.json -o cypress/reports/html --inline",
