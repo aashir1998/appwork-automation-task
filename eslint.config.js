@@ -32,6 +32,19 @@ module.exports = [
   {
     rules: {
       'no-debugger': 'error',
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'Literal[value=/^(https?:)?\\/\\//i]',
+          message:
+            'Do not hardcode URLs — use an env var (e.g. CYPRESS_BASE_URL / Cypress.config("baseUrl")) instead.',
+        },
+        {
+          selector: 'TemplateElement[value.raw=/^(https?:)?\\/\\//i]',
+          message:
+            'Do not hardcode URLs — use an env var (e.g. CYPRESS_BASE_URL / Cypress.config("baseUrl")) instead.',
+        },
+      ],
     },
   },
 ];

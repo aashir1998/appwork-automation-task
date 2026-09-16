@@ -14,7 +14,8 @@
     "pretest": "rm -rf cypress/reports",
     "test": "sh scripts/run-tests.sh",
     "lint": "eslint cypress",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
@@ -34,5 +35,17 @@
     "mochawesome-merge": "^5.1.1",
     "mochawesome-report-generator": "^6.3.2",
     "prettier": "^3.9.7"
+  },
+  "lint-staged": {
+    "cypress/**/*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "{eslint.config.js,cypress.config.js}": [
+      "prettier --write"
+    ],
+    "*.{json,yml,yaml,md}": [
+      "prettier --write"
+    ]
   }
 }
