@@ -69,6 +69,7 @@ jobs:
         run: |
           mkdir -p cypress/reports/mocha cypress/screenshots
           docker run --rm \
+            -e CYPRESS_BASE_URL="${{ vars.CYPRESS_BASE_URL }}" \
             -v "$PWD/cypress/reports:/app/cypress/reports" \
             -v "$PWD/cypress/screenshots:/app/cypress/screenshots" \
             "$IMAGE:$GITHUB_SHA" \
